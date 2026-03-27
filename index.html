@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Uganda Islamic School Portal</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <style>
+        :root { --primary: #1b5e20; --secondary: #f1f8e9; --admin: #0d47a1; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f0; margin: 0; padding: 10px; }
+        .container { background: white; padding: 20px; border-radius: 15px; max-width: 1200px; margin: auto; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        input, select, button { padding: 10px; border-radius: 6px; border: 1px solid #ccc; }
+        button { background: var(--primary); color: white; border: none; font-weight: bold; cursor: pointer; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th { background: var(--primary); color: white; padding: 10px; font-size: 12px; }
+        td { border: 1px solid #eee; padding: 8px; text-align: center; }
+        .badge { padding: 3px 7px; border-radius: 4px; font-weight: bold; color: white; font-size: 11px; }
+        .d { background: #2e7d32; } .c { background: #fbc02d; color: #000; } .p { background: #ef6c00; } .f { background: #c62828; }
+    </style>
+</head>
+<body>
+
+    <div id="loginSection" style="max-width:350px; margin: 100px auto; text-align:center; background:white; padding:30px; border-radius:15px;">
+        <h2 style="color:var(--primary)">School Portal Login</h2>
+        <input type="text" id="uName" placeholder="Name" style="width:100%; margin-bottom:10px;"><br>
+        <input type="password" id="uPass" placeholder="Master Code" style="width:100%; margin-bottom:15px;"><br>
+        <button onclick="doLogin()" style="width:100%">Sign In</button>
+    </div>
+
+    <div id="appSection" class="container" style="display:none;">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <h1 style="color:var(--primary)">Uganda Islamic School</h1>
+            <button onclick="location.reload()" style="background:#666">Logout</button>
+        </div>
+       
+        <div style="background:var(--secondary); padding:15px; border-radius:10px; margin-bottom:20px;">
+            <input type="text" id="stuName" placeholder="New Student Name">
+            <select id="stuClass"><option>P.1</option><option>P.7</option></select>
+            <button onclick="addStudent()">+ Register Student</button>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th><th>Class</th><th>Quran</th><th>Fiqh</th><th>Lugha</th><th>Tarbia</th>
+                    <th>Total</th><th>Avg</th><th>Grade</th><th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="rows"></tbody>
+        </table>
+    </div>
+
+    <script>
+        // --- YOUR CLOUD KEYS ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyD-nA7QvQwxOmjBbJgpXIrwhdY9k-epIjk",
+            authDomain: "ugandaschoolportal-7e2f9.firebaseapp.com",
+            databaseURL: "https://ugandaschoolportal-7e2f9-default-rtdb.firebaseio.com/",
+            projectId: "ugandaschoolportal-7e2f9",
+            storageBucket: "ugandaschoolportal-7e2f9.firebasestorage.app",
+            messagingSenderId: "743325574756",
+            appId: "1:743325574756:web:b01e48e70b796de5daa171"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        let students = [];
+
+        function doLogin() {
+            const pass = document.getElementById('uPass').value;
+            if(pass === "Admin256" || pass === "Staff2026") {
+                document.getElementById('loginSection').style.display = 'none';
+                document.getElementById('appSection').style.display = 'block';
+                loadData();
+            } else { alert("Wrong Code!"); }
+        }
+
+        function loadData() {
+            db.ref('students').on('value', (snap) => {
+                students = snap.val() ? Object.values(snap.val()) : [];
+                render();
+            });
+        }
+
+        function addStudent() {
+            const name = document.getElementById('stuName').value.toUpperCase();
+            if(!name) return;
+            const id = Date.now();
+            db.ref('students/' + id).set({ id, name, class: document.getElementById('stuClass').value, q:0, f:0, l:0, t:0 });
+            document.getElementById('stuName').value = "";
+        }
+
+        function updateScore(id, subject, val) {
+            db.ref('students/' + id).update({ [subject]: parseFloat(val) || 0 });
+        }
+
+        function calculateGrade(avg) {
+            if (avg >= 80) return { g: 'D1', s: 'd' };
+            if (avg >= 60) return { g: 'C3', s: 'c' };
+            if (avg >= 45) return { g: 'P7', s: 'p' };
+            return { g: 'F9', s: 'f' };
+        }
+
+        function render() {
+            const tbody = document.getElementById('rows');
+            tbody.innerHTML = students.map(s => {
+                const tot = (s.q || 0) + (s.f || 0) + (s.l || 0) + (s.t || 0);
+                const avg = (tot / 4).toFixed(1);
+                const gr = calculateGrade(avg);
+                return `<tr>
+                    <td>${s.name}</td><td>${s.class}</td>
+                    <td><input type="number" style="width:50px" value="${s.q}" oninput="updateScore(${s.id},'q',this.value)"></td>
+                    <td><input type="number" style="width:50px" value="${s.f}" oninput="updateScore(${s.id},'f',this.value)"></td>
+                    <td><input type="number" style="width:50px" value="${s.l}" oninput="updateScore(${s.id},'l',this.value)"></td>
+                    <td><input type="number" style="width:50px" value="${s.t}" oninput="updateScore(${s.id},'t',this.value)"></td>
+                    <td>${tot}</td><td>${avg}%</td>
+                    <td><span class="badge ${gr.s}">${gr.g}</span></td>
+                    <td><button onclick="del(${s.id})" style="background:red">X</button></td>
+                </tr>`;
+            }).join('');
+        }
+
+        function del(id) { if(confirm("Delete student?")) db.ref('students/' + id).remove(); }
+    </script>
+</body>
+</html>
