@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Uganda Islamic School Portal</title>
+    <title>AL-HIDAAYAH NURSERY AND PRIMARY SCHOOL</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
@@ -20,6 +20,8 @@
     </style>
 </head>
 <body>
+    <input type="hidden"
+    id="userRole" value="">
 
     <div id="loginSection" style="max-width:350px; margin: 100px auto; text-align:center; background:white; padding:30px; border-radius:15px;">
         <h2 style="color:var(--primary)">School Portal Login</h2>
@@ -36,7 +38,8 @@
        
         <div style="background:var(--secondary); padding:15px; border-radius:10px; margin-bottom:20px;">
             <input type="text" id="stuName" placeholder="New Student Name">
-            <select id="stuClass"><option>P.1</option>
+            <select id="stuClass">
+                <option>P.1</option>
                 <option>P.2</option>
                 <option>P.3</option>
                 <option>P.4</option>
@@ -48,11 +51,7 @@
         </div>
 
         <table>
-            <thead>
-                <tr>
-                    <th>Name</th><th>Class</th><th>Quran</th><th>Fiqh</th><th>Lugha</th><th>Tarbia</th>
-                    <th>Total</th><th>Avg</th><th>Grade</th><th>Action</th>
-                </tr>
+            <thead id="tableHeader">
             </thead>
             <tbody id="rows"></tbody>
         </table>
@@ -75,12 +74,21 @@
         let students = [];
 
         function doLogin() {
+            const user = document.getElementById('uName').value;
             const pass = document.getElementById('uPass').value;
-            if(pass === "Admin256" || pass === "Staff2026") {
-                document.getElementById('loginSection').style.display = 'none';
-                document.getElementById('appSection').style.display = 'block';
-                loadData();
-            } else { alert("Wrong Code!"); }
+            const roleinput = document.getElementById('userRole');
+            if(user === "Admin256" || pass === "Staff2026") {
+                roleInput.value = 'admin';
+                updateHeader(); // Add this line
+                showApp();
+            } else if (pass === 
+            'Staff2026') {
+                roleInput.value = 'staff';
+                updateHeader(); // Add this line
+                showApp();
+            } else {
+                alert("Wrong Pin");
+            }
         }
 
         function loadData() {
@@ -109,24 +117,72 @@
             return { g: 'F9', s: 'f' };
         }
 
+        function updateHeader() {
+    const role = document.getElementById('userRole').value;
+    const head = document.getElementById('tableHead'); // Make sure your <thead> has id="tableHead"
+   
+    head.innerHTML = `
+        <tr>
+            <th>Name</th><th>Class</th>
+            ${role === 'admin' ? '<th>Pos</th><th>Teacher</th>' : ''}
+            <th>Qur</th><th>Fiq</th><th>Lug</th><th>Tar</th>
+            ${role === 'admin' ? '<th>Tot</th><th>Avg</th>' : ''}
+            <th>Gr</th><th>Action</th>
+        </tr>`;
+}
+        
         function render() {
-            const tbody = document.getElementById('rows');
-            tbody.innerHTML = students.map(s => {
-                const tot = (s.q || 0) + (s.f || 0) + (s.l || 0) + (s.t || 0);
-                const avg = (tot / 4).toFixed(1);
-                const gr = calculateGrade(avg);
-                return `<tr>
-                    <td>${s.name}</td><td>${s.class}</td>
-                    <td><input type="number" style="width:50px" value="${s.q}" oninput="updateScore(${s.id},'q',this.value)"></td>
-                    <td><input type="number" style="width:50px" value="${s.f}" oninput="updateScore(${s.id},'f',this.value)"></td>
-                    <td><input type="number" style="width:50px" value="${s.l}" oninput="updateScore(${s.id},'l',this.value)"></td>
-                    <td><input type="number" style="width:50px" value="${s.t}" oninput="updateScore(${s.id},'t',this.value)"></td>
-                    <td>${tot}</td><td>${avg}%</td>
-                    <td><span class="badge ${gr.s}">${gr.g}</span></td>
-                    <td><button onclick="del(${s.id})" style="background:red">X</button></td>
-                </tr>`;
-            }).join('');
-        }
+    const tbody = document.getElementById('rows');
+    const role = document.getElementById('userRole').value;
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+    const classFilter = document.getElementById('filterClass').value;
+
+    // 1. Calculate Totals (Quran, Fiqh, Lugha, Tarbia)
+    let processed = students.map(s => {
+        const subjects = [s.q, s.f, s.l, s.t].map(v => v || 0);
+        const tot = subjects.reduce((a, b) => a + b, 0);
+        return { ...s, totalMarks: tot };
+    });
+
+    // 2. THE RANKING LOGIC: Sort students from highest marks to lowest
+    processed.sort((a, b) => b.totalMarks - a.totalMarks);
+
+    // 3. Apply Search and Class filters
+    const filtered = processed.filter(s => {
+        const matchesName = s.name.toLowerCase().includes(searchTerm);
+        const matchesClass = (classFilter === "All" || s.class === classFilter);
+        return matchesName && matchesClass;
+    });
+
+    tbody.innerHTML = filtered.map((s, index) => {
+        const avg = (s.totalMarks / 4).toFixed(1);
+        const gr = calculateGrade(avg);
+        const pos = index + 1; // This is the Rank (1, 2, 3...)
+
+        return `<tr>
+            <td style="font-weight:bold">${s.name}</td>
+            <td>${s.class}</td>
+           
+            ${role === 'admin' ? `
+                <td style="background:#e8f5e9; font-weight:bold; text-align:center">#${pos}</td>
+                <td style="font-size:10px; color:blue"><b>${s.lastUpdatedBy || '-'}</b><br><i>${s.lastTime || ''}</i></td>
+            ` : ''}
+
+            <td><input type="number" style="width:75px; font-size:16px; padding:5px;" value="${s.q || 0}" oninput="updateScore('${s.id}','q',this.value)"></td>
+            <td><input type="number" style="width:75px; font-size:16px; padding:5px;" value="${s.f || 0}" oninput="updateScore('${s.id}','f',this.value)"></td>
+            <td><input type="number" style="width:75px; font-size:16px; padding:5px;" value="${s.l || 0}" oninput="updateScore('${s.id}','l',this.value)"></td>
+            <td><input type="number" style="width:75px; font-size:16px; padding:5px;" value="${s.t || 0}" oninput="updateScore('${s.id}','t',this.value)"></td>
+
+            ${role === 'admin' ? `<td><b>${s.totalMarks}</b></td><td>${avg}%</td>` : ''}
+           
+            <td><span class="badge ${gr.s}">${gr.g}</span></td>
+            <td>
+                <button onclick="del('${s.id}')" style="background:red; color:white; border:none; padding:5px; border-radius:4px;">X</button>
+                ${role === 'admin' ? `<button onclick='printReport(${JSON.stringify(s)}, ${pos})' style="background:#2e7d32; color:white; border:none; padding:5px; border-radius:4px; margin-left:5px">🖨️</button>` : ''}
+            </td>
+        </tr>`;
+    }).join('');
+}
 
         function del(id) { if(confirm("Delete student?")) db.ref('students/' + id).remove(); }
     </script>
