@@ -74,23 +74,40 @@
     let learnersList = [];
     let currentRole = "";
 
-    function checkLogin() {
-        const user = document.getElementById('userName').value;
-        const code = document.getElementById('accessCode').value;
-        if (code === "Admin256") {
-            currentRole = "admin";
-            document.getElementById('termBtn').style.display = "inline-block";
-            document.getElementById('adminLog').style.display = "block";
-        } else if (code === "Staff2026") {
-            currentRole = "teacher";
-        } else { return alert("Invalid Code"); }
+function checkLogin() {
+    const user = document.getElementById('userName').value.trim();
+    const code = document.getElementById('accessCode').value.trim();
+    const cont = document.getElementById('mainCont');
 
-        db.ref('logs').push({ user: user, time: new Date().toLocaleString(), role: currentRole });
-        document.getElementById('loginSection').style.display = 'none';
-        document.getElementById('appSection').style.display = 'block';
-        document.getElementById('displayRole').innerText = user;
-        renderTable();
+    // If the name box is empty, don't let them in
+    if (user === "") {
+        return alert("Please enter your name first!");
     }
+
+    if (code === "Admin256") {
+        currentRole = "admin";
+        document.getElementById('termBtn').style.display = "inline-block";
+        document.getElementById('adminLog').style.display = "block";
+        cont.className = "container admin-mode";
+    } else if (code === "Staff2026") {
+        currentRole = "teacher";
+        cont.className = "container teacher-mode";
+    } else {
+        return alert("Invalid Access Code! Please try again.");
+    }
+
+    // This part sends the name to Firebase
+    db.ref('logs').push({
+        user: user,
+        time: new Date().toLocaleString(),
+        role: currentRole
+    });
+
+    document.getElementById('loginSection').style.display = 'none';
+    document.getElementById('appSection').style.display = 'block';
+    document.getElementById('displayRole').innerText = user;
+    renderTable();
+}
 
     // --- TERM LOGIC ---
     function changeTerm() {
