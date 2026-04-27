@@ -27,7 +27,7 @@
     <div id="loginSection">
         <h1 style="text-align:center; color:var(--primary);">AL-HIDAAYAH PORTAL</h1>
         <input type="text" id="userName" placeholder="Teacher/Admin Name">
-        <input type="password" id="accessCode" placeholder="Access Code (Staff2026 / Admin256)">
+        <input type="password" id="accessCode" placeholder="Access Code (Enter Secret Code)">
         <button onclick="checkLogin()" style="width:100%;">SIGN IN</button>
     </div>
 
@@ -93,7 +93,7 @@ function checkLogin() {
         currentRole = "teacher";
         cont.className = "container teacher-mode";
     } else {
-        return alert("Invalid Access Code! Please try again.");
+        return alert("Invalid Access Code! Contact Admin.");
     }
 
     // This part sends the name to Firebase
