@@ -46,7 +46,7 @@
                 <option>P.1</option><option>P.2</option><option>P.3</option><option>P.4</option><option>P.5</option><option>P.6</option><option>P.7</option>
             </select>
             <input type="text" id="newName" placeholder="Learner Name" style="flex:2;">
-            <select id="newClass" style="flex:1;"><option>P.1</option><option>P.2</option><option>P.3</option></select>
+            <select id="newClass" style="flex:1;"><option>P.1</option><option>P.2</option><option>P.3</option><option>P.4</option><option>P.5</option><option>P.6</option><option>P.7</option></select>
             <button onclick="addLearner()" style="flex:1;">+ Register</button>
            
             <button id="termBtn" onclick="changeTerm()" style="background:#e65100; display:none;">Change Term</button>
@@ -121,7 +121,8 @@ function checkLogin() {
     function addLearner() {
         const name = document.getElementById('newName').value;
         const cls = document.getElementById('newClass').value;
-        if(name) db.ref('students').push({ name: name, class: cls, qur: 0, fiq: 0, lug: 0, tar: 0 });
+        if(name) db.ref('students').push({ name: name, class: cls, q: 0, f: 0, l: 0, t: 0 // Use single letters here!
+    });
         document.getElementById('newName').value = "";
     }
 
@@ -138,20 +139,21 @@ function checkLogin() {
         let filtered = learnersList;
         if(filter !== "All") filtered = learnersList.filter(s => s.class === filter);
        
-        filtered.sort((a,b) => ((b.qur+b.fiq+b.lug+b.tar) - (a.qur+a.fiq+a.lug+a.tar)));
+        filtered.sort((a,b) => ((b.q+b.f+b.l+b.t) - (a.q+a.f+a.l+a.t)));
 
         tbody.innerHTML = filtered.map((s, index) => {
-            const total = (s.qur + s.fiq + s.lug + s.tar);
-            const avg = (total / 4).toFixed(1);
+     // Change from qur, fiq, lug, tar to q, f, l, t
+        const total = (s.q || 0) + (s.f || 0) + (s.l || 0) + (s.t || 0);
+        const avg = (total / 4).toFixed(1);
             return `
                 <tr>
                     <td>${s.name}</td>
                     <td>${s.class}</td>
                     ${currentRole === 'admin' ? `<td><span class="rank-badge">${index+1}</span></td>` : ''}
-                    <td class="editable" onclick="editMark('${s.id}','qur',${s.qur})">${s.qur}</td>
-                    <td class="editable" onclick="editMark('${s.id}','fiq',${s.fiq})">${s.fiq}</td>
-                    <td class="editable" onclick="editMark('${s.id}','lug',${s.lug})">${s.lug}</td>
-                    <td class="editable" onclick="editMark('${s.id}','tar',${s.tar})">${s.tar}</td>
+                    <td class="editable" onclick="editMark('${s.id}', 'q', ${s.q || 0})">${s.q || 0}</td>
+                    <td class="editable" onclick="editMark('${s.id}', 'f', ${s.f || 0})">${s.f || 0}</td>
+                    <td class="editable" onclick="editMark('${s.id}', 'l', ${s.l || 0})">${s.l || 0}</td>
+                    <td class="editable" onclick="editMark('${s.id}', 't', ${s.t || 0})">${s.t || 0}</td>
                     <td style="font-weight:bold;">${total}</td>
                     <td>${avg}%</td>
                     <td><button style="background:red;width:auto;padding:2px 8px;" onclick="del('${s.id}')">Del</button></td>
