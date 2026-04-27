@@ -3,196 +3,127 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AL-HIDAAYAH NURSERY AND PRIMARY SCHOOL</title>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <title>Al-Hidaayah School Portal</title>
     <style>
-        :root { --primary: #1b5e20; --secondary: #f1f8e9; --admin: #0d47a1; }
-        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f0; margin: 0; padding: 10px; }
-        .container { background: white; padding: 20px; border-radius: 15px; max-width: 1200px; margin: auto; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
-        input, select, button { padding: 10px; border-radius: 6px; border: 1px solid #ccc; }
-        button { background: var(--primary); color: white; border: none; font-weight: bold; cursor: pointer; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th { background: var(--primary); color: white; padding: 10px; font-size: 12px; }
-        td { border: 1px solid #eee; padding: 8px; text-align: center; }
-        .badge { padding: 3px 7px; border-radius: 4px; font-weight: bold; color: white; font-size: 11px; }
-        .d { background: #2e7d32; } .c { background: #fbc02d; color: #000; } .p { background: #ef6c00; } .f { background: #c62828; }
+        :root { --primary: #2e7d32; --secondary: #fbc02d; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #eef2f3; margin: 0; padding: 20px; }
+        .container { background: white; padding: 30px; border-radius: 15px; max-width: 1100px; margin: auto; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        h1, h2 { color: var(--primary); text-align: center; text-transform: uppercase; }
+        input, select, button { padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid #ddd; width: 100%; box-sizing: border-box; font-size: 16px; }
+        button { background: var(--primary); color: white; border: none; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        button:hover { background: #1b5e20; }
+        table { width: 100%; border-collapse: collapse; margin-top: 25px; background: white; }
+        th, td { border: 1px solid #eee; padding: 12px; text-align: center; }
+        th { background: var(--primary); color: white; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+        .badge { padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
     </style>
 </head>
 <body>
-    <input type="hidden"
-    id="userRole" value="">
 
-    <div id="loginSection" style="max-width:350px; margin: 100px auto; text-align:center; background:white; padding:30px; border-radius:15px;">
-        <h2 style="color:var(--primary)">School Portal Login</h2>
-        <input type="text" id="uName" placeholder="Name" style="width:100%; margin-bottom:10px;"><br>
-        <input type="password" id="uPass" placeholder="Master Code" style="width:100%; margin-bottom:15px;"><br>
-        <button onclick="doLogin()" style="width:100%">Sign In</button>
+<div class="container">
+    <input type="hidden" id="userRole" value="">
+
+    <div id="loginSection">
+        <h1>School Portal Login</h1>
+        <input type="text" id="uName" placeholder="Enter Name">
+        <input type="password" id="uPass" placeholder="Enter Master Code">
+        <button onclick="doLogin()">SIGN IN</button>
     </div>
 
-    <div id="appSection" class="container" style="display:none;">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-            <h1 style="color:var(--primary)">Uganda Islamic School</h1>
-            <button onclick="location.reload()" style="background:#666">Logout</button>
+    <div id="appSection" style="display:none;">
+        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 3px solid var(--primary); padding-bottom: 10px;">
+            <h2 style="margin:0;">AL-HIDAAYAH NURSERY AND PRIMARY SCHOOL</h2>
+            <button onclick="location.reload()" style="width:120px; background:#d32f2f;">LOGOUT</button>
         </div>
-       
-        <div style="background:var(--secondary); padding:15px; border-radius:10px; margin-bottom:20px;">
-            <input type="text" id="stuName" placeholder="New Student Name">
-            <select id="stuClass">
-                <option>P.1</option>
-                <option>P.2</option>
-                <option>P.3</option>
-                <option>P.4</option>
-                <option>P.5</option>
-                <option>P.6</option>
-                <option>P.7</option>
-            </select>
-            <button onclick="addStudent()">+ Register Student</button>
+
+        <div id="adminControls" style="display:none; margin-top:20px; padding:20px; background:#f5f5f5; border-radius:10px;">
+            <h3>Register New Student</h3>
+            <div style="display:grid; grid-template-columns: 2fr 1fr 1fr; gap: 10px;">
+                <input type="text" id="stuName" placeholder="Student Full Name">
+                <select id="stuClass">
+                    <option>P.1</option><option>P.2</option><option>P.3</option>
+                    <option>P.4</option><option>P.5</option><option>P.6</option><option>P.7</option>
+                </select>
+                <button onclick="addStudent()">ADD STUDENT</button>
+            </div>
         </div>
 
         <table>
-            <thead id="tableHead">
-            </thead>
+            <thead id="tableHead"></thead>
             <tbody id="rows"></tbody>
         </table>
     </div>
+</div>
 
-    <script>
-        // --- YOUR CLOUD KEYS ---
-        const firebaseConfig = {
-            apiKey: "AIzaSyD-nA7QvQwxOmjBbJgpXIrwhdY9k-epIjk",
-            authDomain: "ugandaschoolportal-7e2f9.firebaseapp.com",
-            databaseURL: "https://ugandaschoolportal-7e2f9-default-rtdb.firebaseio.com/",
-            projectId: "ugandaschoolportal-7e2f9",
-            storageBucket: "ugandaschoolportal-7e2f9.firebasestorage.app",
-            messagingSenderId: "743325574756",
-            appId: "1:743325574756:web:b01e48e70b796de5daa171"
-        };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
+<script>
+    // --- LOGIN SYSTEM ---
+    function doLogin() {
+        const userInput = document.getElementById('uName').value.trim();
+        const passInput = document.getElementById('uPass').value.trim();
+        const roleBox = document.getElementById('userRole');
 
-        let students = [];
-
-        function doLogin() {
-    // 1. Get the boxes
-    const uNameBox = document.getElementById('uName');
-    const uPassBox = document.getElementById('uPass');
-    const roleInput = document.getElementById('userRole');
-
-    // 2. Get the actual words you typed (and remove accidental spaces)
-    const typedName = uNameBox.value.trim();
-    const typedPass = uPassBox.value.trim();
-
-    // 3. The Logic Check
-    if (typedName === 'Admin256' && typedPass === '1234') {
-        if (roleInput) roleInput.value = 'admin';
-        if (typeof updateHeader === "function") updateHeader();
-        showApp();
-    } else if (typedPass === 'Staff2026') {
-        if (roleInput) roleInput.value = 'staff';
-        if (typeof updateHeader === "function") updateHeader();
-        showApp();
-    } else {
-        alert("Invalid Login. You typed: " + typedName + " and " + typedPass);
+        if (userInput.toLowerCase() === 'admin256' && passInput === '1234') {
+            roleBox.value = 'admin';
+            document.getElementById('adminControls').style.display = 'block';
+            showApp();
+        } else if (passInput === 'Staff2026') {
+            roleBox.value = 'staff';
+            document.getElementById('adminControls').style.display = 'none';
+            showApp();
+        } else {
+            alert("Invalid Login! Please check your name and code.");
+        }
     }
-}
 
+    function showApp() {
+        document.getElementById('loginSection').style.display = 'none';
+        document.getElementById('appSection').style.display = 'block';
+        updateHeader();
+        render(); // This will load your students
+    }
 
+    function updateHeader() {
+        const role = document.getElementById('userRole').value;
+        const head = document.getElementById('tableHead');
+        head.innerHTML = `
+            <tr>
+                <th>STUDENT NAME</th>
+                <th>CLASS</th>
+                ${role === 'admin' ? '<th>RANK</th>' : ''}
+                <th>QURAN</th><th>FIQH</th><th>LUGANDA</th><th>TARBIYA</th>
+                ${role === 'admin' ? '<th>TOTAL</th><th>AVG</th>' : ''}
+                <th>ACTION</th>
+            </tr>`;
+    }
 
-        function loadData() {
-            db.ref('students').on('value', (snap) => {
-                students = snap.val() ? Object.values(snap.val()) : [];
-                render();
-            });
-        }
+    // --- DATA HANDLING ---
+    // Placeholder data - replace this with your Firebase db.on('value') logic
+    let students = [
+        { id: '101', name: 'Musa Kato', class: 'P.1', qur: 85, fiq: 78, lug: 92, tar: 88 }
+    ];
 
-        function addStudent() {
-            const name = document.getElementById('stuName').value.toUpperCase();
-            if(!name) return;
-            const id = Date.now();
-            db.ref('students/' + id).set({ id, name, class: document.getElementById('stuClass').value, q:0, f:0, l:0, t:0 });
-            document.getElementById('stuName').value = "";
-        }
+    function render() {
+        const role = document.getElementById('userRole').value;
+        const tbody = document.getElementById('rows');
+       
+        // Sorting for Rank
+        students.sort((a,b) => (b.qur+b.fiq+b.lug+b.tar) - (a.qur+a.fiq+a.lug+a.tar));
 
-        function updateScore(id, subject, val) {
-            db.ref('students/' + id).update({ [subject]: parseFloat(val) || 0 });
-        }
-
-        function calculateGrade(avg) {
-            if (avg >= 80) return { g: 'D1', s: 'd' };
-            if (avg >= 60) return { g: 'C3', s: 'c' };
-            if (avg >= 45) return { g: 'P7', s: 'p' };
-            return { g: 'F9', s: 'f' };
-        }
-
-        function updateHeader() {
-    const role = document.getElementById('userRole').value;
-    const head = document.getElementById('tableHead'); // Make sure your <thead> has id="tableHead"
-   
-    head.innerHTML = `
-        <tr>
-            <th>Name</th><th>Class</th>
-            ${role === 'admin' ? '<th>Pos</th><th>Teacher</th>' : ''}
-            <th>Qur</th><th>Fiq</th><th>Lug</th><th>Tar</th>
-            ${role === 'admin' ? '<th>Tot</th><th>Avg</th>' : ''}
-            <th>Gr</th><th>Action</th>
-        </tr>`;
-}
-        
-        function render() {
-    const tbody = document.getElementById('rows');
-    const role = document.getElementById('userRole').value;
-    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-    const classFilter = document.getElementById('filterClass').value;
-
-    // 1. Calculate Totals (Quran, Fiqh, Lugha, Tarbia)
-    let processed = students.map(s => {
-        const subjects = [s.q, s.f, s.l, s.t].map(v => v || 0);
-        const tot = subjects.reduce((a, b) => a + b, 0);
-        return { ...s, totalMarks: tot };
-    });
-
-    // 2. THE RANKING LOGIC: Sort students from highest marks to lowest
-    processed.sort((a, b) => b.totalMarks - a.totalMarks);
-
-    // 3. Apply Search and Class filters
-    const filtered = processed.filter(s => {
-        const matchesName = s.name.toLowerCase().includes(searchTerm);
-        const matchesClass = (classFilter === "All" || s.class === classFilter);
-        return matchesName && matchesClass;
-    });
-
-    tbody.innerHTML = filtered.map((s, index) => {
-        const avg = (s.totalMarks / 4).toFixed(1);
-        const gr = calculateGrade(avg);
-        const pos = index + 1; // This is the Rank (1, 2, 3...)
-
-        return `<tr>
-            <td style="font-weight:bold">${s.name}</td>
-            <td>${s.class}</td>
-           
-            ${role === 'admin' ? `
-                <td style="background:#e8f5e9; font-weight:bold; text-align:center">#${pos}</td>
-                <td style="font-size:10px; color:blue"><b>${s.lastUpdatedBy || '-'}</b><br><i>${s.lastTime || ''}</i></td>
-            ` : ''}
-
-            <td><input type="number" style="width:75px; font-size:16px; padding:5px;" value="${s.q || 0}" oninput="updateScore('${s.id}','q',this.value)"></td>
-            <td><input type="number" style="width:75px; font-size:16px; padding:5px;" value="${s.f || 0}" oninput="updateScore('${s.id}','f',this.value)"></td>
-            <td><input type="number" style="width:75px; font-size:16px; padding:5px;" value="${s.l || 0}" oninput="updateScore('${s.id}','l',this.value)"></td>
-            <td><input type="number" style="width:75px; font-size:16px; padding:5px;" value="${s.t || 0}" oninput="updateScore('${s.id}','t',this.value)"></td>
-
-            ${role === 'admin' ? `<td><b>${s.totalMarks}</b></td><td>${avg}%</td>` : ''}
-           
-            <td><span class="badge ${gr.s}">${gr.g}</span></td>
-            <td>
-                <button onclick="del('${s.id}')" style="background:red; color:white; border:none; padding:5px; border-radius:4px;">X</button>
-                ${role === 'admin' ? `<button onclick='printReport(${JSON.stringify(s)}, ${pos})' style="background:#2e7d32; color:white; border:none; padding:5px; border-radius:4px; margin-left:5px">🖨️</button>` : ''}
-            </td>
-        </tr>`;
-    }).join('');
-}
-
-        function del(id) { if(confirm("Delete student?")) db.ref('students/' + id).remove(); }
-    </script>
+        tbody.innerHTML = students.map((s, index) => {
+            const total = (s.qur + s.fiq + s.lug + s.tar);
+            const avg = (total / 4).toFixed(1);
+            return `
+                <tr>
+                    <td>${s.name}</td>
+                    <td><span class="badge" style="background:#eee;">${s.class}</span></td>
+                    ${role === 'admin' ? `<td style="font-weight:bold; color:var(--primary);">#${index+1}</td>` : ''}
+                    <td>${s.qur}</td><td>${s.fiq}</td><td>${s.lug}</td><td>${s.tar}</td>
+                    ${role === 'admin' ? `<td style="background:#fff9c4;">${total}</td><td>${avg}%</td>` : ''}
+                    <td><button style="background:#555; padding:5px 10px; width:auto;" onclick="printReport('${s.id}')">Report</button></td>
+                </tr>`;
+        }).join('');
+    }
+</script>
 </body>
 </html>
