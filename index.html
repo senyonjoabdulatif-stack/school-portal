@@ -74,22 +74,24 @@
         let students = [];
 
         function doLogin() {
-            const user = document.getElementById('uName').value;
-            const pass = document.getElementById('uPass').value;
-            const roleinput = document.getElementById('userRole');
-            if(user === "Admin256" || pass === "Staff2026") {
-                roleInput.value = 'admin';
-                updateHeader(); // Add this line
-                showApp();
-            } else if (pass === 
-            'Staff2026') {
-                roleInput.value = 'staff';
-                updateHeader(); // Add this line
-                showApp();
-            } else {
-                alert("Wrong Pin");
-            }
-        }
+    const user = document.getElementById('uName').value;
+    const pass = document.getElementById('uPass').value;
+    const roleInput = document.getElementById('userRole');
+
+    // Make sure 'userRole' exists in your HTML or this line will "break" the login
+    if (user === 'Admin256' && pass === '1234') {
+        roleInput.value = 'admin';
+        if(typeof updateHeader === "function") updateHeader();
+        showApp();
+    } else if (pass === 'Staff2026') {
+        roleInput.value = 'staff';
+        if(typeof updateHeader === "function") updateHeader();
+        showApp();
+    } else {
+        alert("Invalid Login");
+    }
+}
+
 
         function loadData() {
             db.ref('students').on('value', (snap) => {
