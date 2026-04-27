@@ -4,146 +4,143 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Al-Hidaayah School Portal</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
-        :root { --primary: #2e7d32; --secondary: #fbc02d; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #eef2f3; margin: 0; padding: 20px; }
-        .container { background: white; padding: 30px; border-radius: 15px; max-width: 1100px; margin: auto; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
-        h1, h2 { color: var(--primary); text-align: center; text-transform: uppercase; }
-        input, select, button { padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid #ddd; width: 100%; box-sizing: border-box; font-size: 16px; }
-        button { background: var(--primary); color: white; border: none; font-weight: bold; cursor: pointer; transition: 0.3s; }
-        button:hover { background: #1b5e20; }
-        table { width: 100%; border-collapse: collapse; margin-top: 25px; background: white; }
-        th, td { border: 1px solid #eee; padding: 12px; text-align: center; }
+        :root { --primary: #2e7d32; }
+        body { font-family: sans-serif; background: #f4f7f6; padding: 20px; }
+        .container { background: white; padding: 25px; border-radius: 12px; max-width: 1100px; margin: auto; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        h1 { color: var(--primary); text-align: center; border-bottom: 3px solid var(--primary); padding-bottom: 10px; }
+        input, select, button { padding: 10px; margin: 5px 0; border-radius: 5px; border: 1px solid #ccc; width: 100%; box-sizing: border-box; }
+        button { background: var(--primary); color: white; border: none; font-weight: bold; cursor: pointer; }
+        .controls-row { display: flex; gap: 10px; background: #e8f5e9; padding: 15px; border-radius: 8px; margin-bottom: 20px; align-items: flex-end; }
+        .filter-section { background: #fff3e0; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #ffe0b2; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { border: 1px solid #ddd; padding: 12px; text-align: center; }
         th { background: var(--primary); color: white; }
-        tr:nth-child(even) { background-color: #f9f9f9; }
-        .badge { padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
+        .editable { cursor: pointer; background: #fffde7; font-weight: bold; color: #2e7d32; }
+        .editable:hover { background: #fff9c4; text-decoration: underline; }
+        .del-btn { background: #d32f2f; width: auto; padding: 5px 10px; font-size: 12px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <input type="hidden" id="userRole" value="">
+    <h1>AL-HIDAAYAH NURSERY AND PRIMARY SCHOOL</h1>
 
-    <div id="loginSection">
-        <h1>School Portal Login</h1>
-        <input type="text" id="uName" placeholder="Enter Name">
-        <input type="password" id="uPass" placeholder="Enter Master Code">
-        <button onclick="doLogin()">SIGN IN</button>
+    <div class="filter-section">
+        <label style="font-weight: bold; color: #e65100;">🔍 Filter by Class:</label>
+        <select id="classFilter" onchange="render()" style="border: 2px solid #ffb74d;">
+            <option value="All">Show All Learners</option>
+            <option value="P.1">P.1 Only</option>
+            <option value="P.2">P.2 Only</option>
+            <option value="P.3">P.3 Only</option>
+            <option value="P.4">P.4 Only</option>
+            <option value="P.5">P.5 Only</option>
+            <option value="P.6">P.6 Only</option>
+            <option value="P.7">P.7 Only</option>
+        </select>
     </div>
 
-    <div id="appSection" style="display:none;">
-        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 3px solid var(--primary); padding-bottom: 10px;">
-            <h2 style="margin:0;">AL-HIDAAYAH NURSERY AND PRIMARY SCHOOL</h2>
-            <button onclick="location.reload()" style="width:120px; background:#d32f2f;">LOGOUT</button>
+    <div class="controls-row">
+        <div style="flex: 2;">
+            <label>Learner Name:</label>
+            <input type="text" id="stuName" placeholder="Full Name">
         </div>
-
-        <div id="adminControls" style="display:none; margin-top:20px; padding:20px; background:#f5f5f5; border-radius:10px;">
-            <h3>Register New Student</h3>
-            <div style="display:grid; grid-template-columns: 2fr 1fr 1fr; gap: 10px;">
-                <input type="text" id="stuName" placeholder="Student Full Name">
-                <select id="stuClass">
-                    <option>P.1</option><option>P.2</option><option>P.3</option>
-                    <option>P.4</option><option>P.5</option><option>P.6</option><option>P.7</option>
-                </select>
-                <button onclick="addStudent()">ADD STUDENT</button>
-            </div>
+        <div style="flex: 1;">
+            <label>Class:</label>
+            <select id="stuClass">
+                <option>P.1</option><option>P.2</option><option>P.3</option>
+                <option>P.4</option><option>P.5</option><option>P.6</option><option>P.7</option>
+            </select>
         </div>
-
-        <table>
-            <thead id="tableHead"></thead>
-            <tbody id="rows"></tbody>
-        </table>
+        <div style="flex: 1;">
+            <button onclick="addStudent()">+ Register</button>
+        </div>
     </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>NAME</th><th>CLASS</th>
+                <th>QURAN</th><th>FIQH</th><th>LUGHA</th><th>TARBIYA</th>
+                <th>TOTAL</th><th>ACTION</th>
+            </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+    </table>
 </div>
 
 <script>
-    // --- LOGIN SYSTEM ---
-    function doLogin() {
-        const userInput = document.getElementById('uName').value.trim();
-        const passInput = document.getElementById('uPass').value.trim();
-        const roleBox = document.getElementById('userRole');
+    // PASTE YOUR FIREBASE CONFIG HERE
+    const firebaseConfig = {
+        apiKey: "YOUR_API_KEY",
+        databaseURL: "YOUR_DATABASE_URL",
+        projectId: "YOUR_PROJECT_ID",
+    };
 
-        if (userInput.toLowerCase() === 'admin256' && passInput === '1234') {
-            roleBox.value = 'admin';
-            document.getElementById('adminControls').style.display = 'block';
-            showApp();
-        } else if (passInput === 'Staff2026') {
-            roleBox.value = 'staff';
-            document.getElementById('adminControls').style.display = 'none';
-            showApp();
-        } else {
-            alert("Invalid Login! Please check your name and code.");
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    let allLearners = []; // Local copy of data
+
+    // ADD LEARNER
+    function addStudent() {
+        const name = document.getElementById('stuName').value.trim();
+        const sClass = document.getElementById('stuClass').value;
+        if (name === "") return alert("Enter a name");
+
+        db.ref('students').push({
+            name: name, class: sClass,
+            qur: 0, fiq: 0, lug: 0, tar: 0
+        }).then(() => { document.getElementById('stuName').value = ""; });
+    }
+
+    // DELETE LEARNER
+    function delStudent(id) {
+        if (confirm("Delete this learner?")) db.ref('students/' + id).remove();
+    }
+
+    // EDIT MARKS
+    function editMark(id, subject, currentVal) {
+        const newVal = prompt(`Enter new score for ${subject}:`, currentVal);
+        if (newVal !== null && !isNaN(newVal)) {
+            let updateData = {};
+            updateData[subject] = parseInt(newVal);
+            db.ref('students/' + id).update(updateData);
         }
     }
 
-    function showApp() {
-        document.getElementById('loginSection').style.display = 'none';
-        document.getElementById('appSection').style.display = 'block';
-        updateHeader();
-        render(); // This will load your students
-    }
-
-    function updateHeader() {
-        const role = document.getElementById('userRole').value;
-        const head = document.getElementById('tableHead');
-        head.innerHTML = `
-            <tr>
-                <th>STUDENT NAME</th>
-                <th>CLASS</th>
-                ${role === 'admin' ? '<th>RANK</th>' : ''}
-                <th>QURAN</th><th>FIQH</th><th>LUGHA</th><th>TARBIYA</th>
-                ${role === 'admin' ? '<th>TOTAL</th><th>AVG</th>' : ''}
-                <th>ACTION</th>
-            </tr>`;
-    }
-
-    // --- DATA HANDLING ---
-    // Placeholder data - replace this with your Firebase db.on('value') logic
-    let students = [
-        { id: '101', name: 'Musa Kato', class: 'P.1', qur: 85, fiq: 78, lug: 92, tar: 88 }
-    ];
-
+    // RENDER TABLE (Includes Filter Logic)
     function render() {
-        const role = document.getElementById('userRole').value;
+        const filterValue = document.getElementById('classFilter').value;
         const tbody = document.getElementById('rows');
-       
-        // Sorting for Rank
-        students.sort((a,b) => (b.qur+b.fiq+b.lug+b.tar) - (a.qur+a.fiq+a.lug+a.tar));
+        tbody.innerHTML = "";
 
-        tbody.innerHTML = students.map((s, index) => {
-            const total = (s.qur + s.fiq + s.lug + s.tar);
-            const avg = (total / 4).toFixed(1);
-            return `
+        allLearners.forEach(learner => {
+            // FILTER LOGIC: If filter is not "All", skip learners who don't match the class
+            if (filterValue !== "All" && learner.class !== filterValue) return;
+
+            const total = (learner.qur || 0) + (learner.fiq || 0) + (learner.lug || 0) + (learner.tar || 0);
+            tbody.innerHTML += `
                 <tr>
-                    <td>${s.name}</td>
-                    <td><span class="badge" style="background:#eee;">${s.class}</span></td>
-                    ${role === 'admin' ? `<td style="font-weight:bold; color:var(--primary);">#${index+1}</td>` : ''}
-                    <td>${s.qur}</td><td>${s.fiq}</td><td>${s.lug}</td><td>${s.tar}</td>
-                    ${role === 'admin' ? `<td style="background:#fff9c4;">${total}</td><td>${avg}%</td>` : ''}
-                    <td><button style="background:#555; padding:5px 10px; width:auto;" onclick="delStudent('${s.id}')">Delete</button></td>
+                    <td>${learner.name}</td>
+                    <td>${learner.class}</td>
+                    <td class="editable" onclick="editMark('${learner.id}', 'qur', ${learner.qur})">${learner.qur}</td>
+                    <td class="editable" onclick="editMark('${learner.id}', 'fiq', ${learner.fiq})">${learner.fiq}</td>
+                    <td class="editable" onclick="editMark('${learner.id}', 'lug', ${learner.lug})">${learner.lug}</td>
+                    <td class="editable" onclick="editMark('${learner.id}', 'tar', ${learner.tar})">${learner.tar}</td>
+                    <td style="font-weight:bold;">${total}</td>
+                    <td><button class="del-btn" onclick="delStudent('${learner.id}')">Delete</button></td>
                 </tr>`;
-        }).join('');
-    }
-    function delStudent(id) {
-    console.log("Attempting to delete student with ID:", id); // This shows in the console
-   
-    if (!id || id === "undefined") {
-        alert("Error: Student ID not found. Cannot delete.");
-        return;
-    }
-
-    if (confirm("Are you sure you want to delete this student?")) {
-        db.ref('students/' + id).remove()
-        .then(() => {
-            alert("Student deleted successfully!");
-        })
-        .catch((error) => {
-            console.error("Firebase Delete Error:", error);
-            alert("Failed to delete: " + error.message);
         });
     }
-}
 
+    // DATA LISTENER
+    db.ref('students').on('value', (snapshot) => {
+        const data = snapshot.val();
+        allLearners = data ? Object.keys(data).map(key => ({ id: key, ...data[key] })) : [];
+        render();
+    });
 </script>
 </body>
 </html>
