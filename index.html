@@ -7,154 +7,158 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
-        :root { --primary: #2e7d32; --accent: #fbc02d; }
-        body { font-family: 'Segoe UI', sans-serif; background: #f0f4f3; margin: 0; padding: 20px; }
-        .container { background: white; padding: 25px; border-radius: 15px; max-width: 1100px; margin: auto; box-shadow: 0 8px 20px rgba(0,0,0,0.1); }
-        h1 { color: var(--primary); text-align: center; text-transform: uppercase; border-bottom: 3px solid var(--accent); padding-bottom: 10px; }
-        input, select, button { padding: 12px; margin: 5px 0; border-radius: 8px; border: 1px solid #ccc; width: 100%; box-sizing: border-box; }
+        :root { --primary: #2e7d32; --admin-color: #1565c0; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f4f3; padding: 15px; margin: 0; }
+        .container { background: white; padding: 20px; border-radius: 12px; max-width: 1300px; margin: auto; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .nav-bar { display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #fbc02d; padding-bottom: 10px; margin-bottom: 15px; }
+        input, select, button { padding: 10px; margin: 5px 0; border-radius: 6px; border: 1px solid #ccc; font-size: 14px; }
         button { background: var(--primary); color: white; border: none; font-weight: bold; cursor: pointer; }
-        .nav-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .admin-box { background: #e8f5e9; padding: 15px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #c8e6c9; }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; background: white; }
-        th, td { border: 1px solid #ddd; padding: 12px; text-align: center; }
-        th { background: var(--primary); color: white; }
-        .editable { cursor: pointer; background: #fffde7; font-weight: bold; }
-        .del-btn { background: #d32f2f; width: auto; padding: 5px 10px; font-size: 12px; }
+        .term-box { background: #fff3e0; padding: 10px; border-radius: 8px; display: inline-block; font-weight: bold; color: #e65100; margin-bottom: 10px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+        th { background: #f8f9fa; color: #333; }
+        .rank-badge { background: #ffd700; padding: 4px 8px; border-radius: 4px; font-weight: bold; }
+        .editable { cursor: pointer; color: var(--primary); font-weight: bold; text-decoration: underline; }
     </style>
 </head>
 <body>
 
-<div class="container">
+<div class="container" id="mainCont">
     <div id="loginSection">
-        <h1>Al-Hidaayah Portal Login</h1>
-        <input type="password" id="masterCode" placeholder="Enter Teacher Access Code">
-        <button onclick="checkLogin()">SIGN IN</button>
+        <h1 style="text-align:center; color:var(--primary);">AL-HIDAAYAH PORTAL</h1>
+        <input type="text" id="userName" placeholder="Teacher/Admin Name">
+        <input type="password" id="accessCode" placeholder="Access Code (Staff2026 / Admin256)">
+        <button onclick="checkLogin()" style="width:100%;">SIGN IN</button>
     </div>
 
     <div id="appSection" style="display:none;">
         <div class="nav-bar">
-            <h2 style="color: var(--primary); margin:0;">AL-HIDAAYAH SCHOOL</h2>
-            <button onclick="location.reload()" style="width:100px; background:#555;">LOGOUT</button>
+            <h2 id="displayRole">Dashboard</h2>
+            <div>
+                <span class="term-box" id="termDisplay">TERM: 1</span>
+                <button onclick="location.reload()" style="background:#d32f2f; margin-left:10px;">LOGOUT</button>
+            </div>
         </div>
 
-        <div class="admin-box">
-            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px; align-items: end;">
-                <div>
-                    <label><b>🔍 Filter Class:</b></label>
-                    <select id="classFilter" onchange="renderTable()">
-                        <option value="All">Show All</option>
-                        <option>P.1</option><option>P.2</option><option>P.3</option>
-                        <option>P.4</option><option>P.5</option><option>P.6</option><option>P.7</option>
-                    </select>
-                </div>
-                <div>
-                    <label>New Learner Name:</label>
-                    <input type="text" id="newName" placeholder="Full Name">
-                </div>
-                <div>
-                    <label>Class:</label>
-                    <select id="newClass">
-                        <option>P.1</option><option>P.2</option><option>P.3</option>
-                        <option>P.4</option><option>P.5</option><option>P.6</option><option>P.7</option>
-                    </select>
-                </div>
-                <button onclick="addLearner()">+ ADD LEARNER</button>
-            </div>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap; background: #e8f5e9; padding: 10px; border-radius: 8px;">
+            <select id="classFilter" onchange="renderTable()" style="flex:1;">
+                <option value="All">All Classes</option>
+                <option>P.1</option><option>P.2</option><option>P.3</option><option>P.4</option><option>P.5</option><option>P.6</option><option>P.7</option>
+            </select>
+            <input type="text" id="newName" placeholder="Learner Name" style="flex:2;">
+            <select id="newClass" style="flex:1;"><option>P.1</option><option>P.2</option><option>P.3</option></select>
+            <button onclick="addLearner()" style="flex:1;">+ Register</button>
+           
+            <button id="termBtn" onclick="changeTerm()" style="background:#e65100; display:none;">Change Term</button>
         </div>
 
         <table>
             <thead>
-                <tr>
-                    <th>NAME</th><th>CLASS</th>
-                    <th>QURAN</th><th>FIQH</th><th>LUGANDA</th><th>TARBIYA</th>
-                    <th>TOTAL</th><th>ACTION</th>
-                </tr>
+                <tr id="thr"></tr>
             </thead>
             <tbody id="rows"></tbody>
         </table>
+
+        <div id="adminLog" style="display:none; margin-top:20px; font-size:12px; color:#666;">
+            <h3>Staff Activity Log</h3>
+            <div id="logContent"></div>
+        </div>
     </div>
 </div>
 
 <script>
-    // --- FIREBASE CONFIG (Use your URL from photo 8ba49c6b) ---
-    const firebaseConfig = {
-        databaseURL: "https://ugandaschoolportal-7e2f9-default-rtdb.firebaseio.com/"
-    };
+    const firebaseConfig = { databaseURL: "https://ugandaschoolportal-7e2f9-default-rtdb.firebaseio.com/" };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
+   
     let learnersList = [];
+    let currentRole = "";
 
-    // --- LOGIN LOGIC ---
     function checkLogin() {
-        const code = document.getElementById('masterCode').value;
-        if (code === "2026") { // Set your own password here
-            document.getElementById('loginSection').style.display = 'none';
-            document.getElementById('appSection').style.display = 'block';
-        } else {
-            alert("Incorrect Access Code!");
-        }
+        const user = document.getElementById('userName').value;
+        const code = document.getElementById('accessCode').value;
+        if (code === "Admin256") {
+            currentRole = "admin";
+            document.getElementById('termBtn').style.display = "inline-block";
+            document.getElementById('adminLog').style.display = "block";
+        } else if (code === "Staff2026") {
+            currentRole = "teacher";
+        } else { return alert("Invalid Code"); }
+
+        db.ref('logs').push({ user: user, time: new Date().toLocaleString(), role: currentRole });
+        document.getElementById('loginSection').style.display = 'none';
+        document.getElementById('appSection').style.display = 'block';
+        document.getElementById('displayRole').innerText = user;
+        renderTable();
     }
 
-    // --- ADD LEARNER ---
+    // --- TERM LOGIC ---
+    function changeTerm() {
+        const newT = prompt("Enter Term Number (1, 2, or 3):");
+        if(newT) db.ref('currentTerm').set(newT);
+    }
+    db.ref('currentTerm').on('value', (s) => {
+        document.getElementById('termDisplay').innerText = "TERM: " + (s.val() || "1");
+    });
+
     function addLearner() {
-        const name = document.getElementById('newName').value.trim();
+        const name = document.getElementById('newName').value;
         const cls = document.getElementById('newClass').value;
-        if (!name) return alert("Please enter a name");
-
-        db.ref('students').push({
-            name: name, class: cls,
-            qur: 0, fiq: 0, lug: 0, tar: 0
-        }).then(() => {
-            document.getElementById('newName').value = "";
-            alert("Learner Added!");
-        });
+        if(name) db.ref('students').push({ name: name, class: cls, qur: 0, fiq: 0, lug: 0, tar: 0 });
+        document.getElementById('newName').value = "";
     }
 
-    // --- EDIT MARKS ---
-    function editMark(id, subject, current) {
-        const newVal = prompt(`Enter score for ${subject}:`, current);
-        if (newVal !== null && !isNaN(newVal)) {
-            db.ref('students/' + id).update({ [subject]: parseInt(newVal) });
-        }
-    }
-
-    // --- DELETE ---
-    function deleteLearner(id) {
-        if (confirm("Delete this record permanently?")) {
-            db.ref('students/' + id).remove();
-        }
-    }
-
-    // --- RENDER TABLE ---
     function renderTable() {
         const filter = document.getElementById('classFilter').value;
+        const thr = document.getElementById('thr');
         const tbody = document.getElementById('rows');
-        tbody.innerHTML = "";
+       
+        // Dynamic Headers
+        thr.innerHTML = `<th>NAME</th><th>CLASS</th>${currentRole === 'admin' ? '<th>RANK</th>' : ''}<th>QURAN</th><th>FIQH</th><th>LUGANDA</th><th>TARBIYA</th><th>TOTAL</th><th>AVG</th><th>ACTION</th>`;
+       
+        // --- SORTING BY RANK ---
+        // We calculate (qur+fiq+lug+tar) and sort highest to lowest
+        let filtered = learnersList;
+        if(filter !== "All") filtered = learnersList.filter(s => s.class === filter);
+       
+        filtered.sort((a,b) => ((b.qur+b.fiq+b.lug+b.tar) - (a.qur+a.fiq+a.lug+a.tar)));
 
-        learnersList.forEach(item => {
-            if (filter !== "All" && item.class !== filter) return;
-
-            const total = (item.qur || 0) + (item.fiq || 0) + (item.lug || 0) + (item.tar || 0);
-            tbody.innerHTML += `
+        tbody.innerHTML = filtered.map((s, index) => {
+            const total = (s.qur + s.fiq + s.lug + s.tar);
+            const avg = (total / 4).toFixed(1);
+            return `
                 <tr>
-                    <td>${item.name}</td>
-                    <td>${item.class}</td>
-                    <td class="editable" onclick="editMark('${item.id}','qur',${item.qur})">${item.qur}</td>
-                    <td class="editable" onclick="editMark('${item.id}','fiq',${item.fiq})">${item.fiq}</td>
-                    <td class="editable" onclick="editMark('${item.id}','lug',${item.lug})">${item.lug}</td>
-                    <td class="editable" onclick="editMark('${item.id}','tar',${item.tar})">${item.tar}</td>
+                    <td>${s.name}</td>
+                    <td>${s.class}</td>
+                    ${currentRole === 'admin' ? `<td><span class="rank-badge">${index+1}</span></td>` : ''}
+                    <td class="editable" onclick="editMark('${s.id}','qur',${s.qur})">${s.qur}</td>
+                    <td class="editable" onclick="editMark('${s.id}','fiq',${s.fiq})">${s.fiq}</td>
+                    <td class="editable" onclick="editMark('${s.id}','lug',${s.lug})">${s.lug}</td>
+                    <td class="editable" onclick="editMark('${s.id}','tar',${s.tar})">${s.tar}</td>
                     <td style="font-weight:bold;">${total}</td>
-                    <td><button class="del-btn" onclick="deleteLearner('${item.id}')">Del</button></td>
+                    <td>${avg}%</td>
+                    <td><button style="background:red;width:auto;padding:2px 8px;" onclick="del('${s.id}')">Del</button></td>
                 </tr>`;
-        });
+        }).join('');
     }
 
-    // --- DATA WATCHER ---
-    db.ref('students').on('value', (snapshot) => {
-        const data = snapshot.val();
-        learnersList = data ? Object.keys(data).map(key => ({ id: key, ...data[key] })) : [];
+    db.ref('students').on('value', (snap) => {
+        const data = snap.val();
+        learnersList = data ? Object.keys(data).map(k => ({ id: k, ...data[k] })) : [];
         renderTable();
     });
+
+    db.ref('logs').limitToLast(3).on('value', (snap) => {
+        const logs = snap.val();
+        if(logs) document.getElementById('logContent').innerHTML = Object.values(logs).reverse()
+            .map(l => `<p>${l.user} (${l.role}) - ${l.time}</p>`).join('');
+    });
+
+    function editMark(id, subj, cur) {
+        const v = prompt("Enter new mark:", cur);
+        if(v !== null && !isNaN(v)) db.ref('students/'+id).update({ [subj]: parseInt(v) });
+    }
+    function del(id) { if(confirm("Delete learner?")) db.ref('students/'+id).remove(); }
 </script>
 </body>
 </html>
