@@ -4,13 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Al-Hidaayah School Portal</title>
-    <!-- Firebase App & Database SDKs -->
+    <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <!-- Google Fonts for Bismillah -->
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&display=swap" rel="stylesheet">
     <style>
         :root { --primary: #2e7d32; --admin-color: #1565c0; }
         body { font-family: 'Segoe UI', sans-serif; background: #f0f4f3; padding: 15px; margin: 0; }
         .container { background: white; padding: 20px; border-radius: 12px; max-width: 1350px; margin: auto; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .bismillah { font-family: 'Amiri', serif; font-size: 24px; color: var(--primary); text-align: center; margin-bottom: 5px; direction: rtl; }
         .nav-bar { display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #fbc02d; padding-bottom: 10px; margin-bottom: 15px; }
         input, select, button { padding: 10px; margin: 5px 0; border-radius: 6px; border: 1px solid #ccc; font-size: 14px; }
         button { background: var(--primary); color: white; border: none; font-weight: bold; cursor: pointer; }
@@ -20,6 +23,7 @@
         th { background: #f8f9fa; color: #333; }
         .rank-badge { background: #ffd700; padding: 4px 8px; border-radius: 4px; font-weight: bold; }
         .editable { cursor: pointer; color: var(--primary); font-weight: bold; text-decoration: underline; }
+        .activity-log { margin-top: 25px; padding: 12px; background: #f9f9f9; border-top: 2px solid #ddd; font-size: 12px; }
     </style>
 </head>
 <body>
@@ -27,11 +31,15 @@
 <div class="container" id="mainCont">
     <!-- LOGIN SECTION -->
     <div id="loginSection">
-        <h2 style="text-align: center; color: #2e7d32; font-family: Arial, Helvetica, sans-serif; font-size: x-large; color: #d32f2f;">بسم الله الرحمن الرحيم</h2>
-        <h1 style="text-align:center; color:var(--primary);">AL-HIDAAYAH MARKSHEET</h1>
+        <div class="bismillah">بِسْمِ ٱللَّٰهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ</div>
+        <h1 style="text-align:center; color:red; margin-top:0;">AL-HIDAAYAH PORTAL</h1>
+        
+        <!-- School Logo (Ensure filename matches exact image name in folder) -->
+        <img src="IMG_20260815_231952.jpg" alt="Logo" style="display:block; margin:0 auto 15px auto; width:110px; height:auto;">
+
         <input type="text" id="userName" placeholder="Teacher/Admin Name" style="width:100%;">
-        <input type="password" id="accessCode" placeholder="Enter Passcode" style="width:100%;">
-        <button onclick="checkLogin()" style="width:100%; color:#eeff00;">LOGIN</button>
+        <input type="password" id="accessCode" placeholder="Enter password" style="width:100%;">
+        <button onclick="checkLogin()" style="width:100%;">LOGIN</button>
     </div>
 
     <!-- MAIN DASHBOARD -->
@@ -41,9 +49,8 @@
             <button onclick="location.reload()" style="background:#d32f2f;">LOGOUT</button>
         </div>
 
-        <!-- PERIOD & LEARNER CONTROLS -->
+        <!-- PERIOD, EXAM & LEARNER CONTROLS -->
         <div class="controls-bar">
-            <!-- 5 Years Selection -->
             <select id="yearSelect" onchange="changePeriod()">
                 <option value="2026">2026</option>
                 <option value="2027">2027</option>
@@ -52,11 +59,17 @@
                 <option value="2030">2030</option>
             </select>
 
-            <!-- 3 Terms Selection -->
             <select id="termSelect" onchange="changePeriod()">
                 <option value="Term1">Term 1</option>
                 <option value="Term2">Term 2</option>
                 <option value="Term3">Term 3</option>
+            </select>
+
+            <!-- EXAM PHASE SELECTOR -->
+            <select id="examSelect" onchange="renderTable()">
+                <option value="MT">Mid-Term Exams</option>
+                <option value="ET">End-Term Exams</option>
+                <option value="ALL">Combined (MT + ET)</option>
             </select>
 
             <select id="classFilter" onchange="renderTable()">
@@ -79,6 +92,12 @@
             <thead><tr id="thr"></tr></thead>
             <tbody id="rows"></tbody>
         </table>
+
+        <!-- STAFF ACTIVITY LOG -->
+        <div class="activity-log">
+            <h4 style="margin:0 0 8px 0;">Staff Activity Log</h4>
+            <div id="logContent">Loading activity logs...</div>
+        </div>
     </div>
 </div>
 
@@ -93,21 +112,21 @@
         messagingSenderId: "743325574756",
         appId: "YOUR_APP_ID"
     };
-   
-    // Initialize Firebase
+
     if (!firebase.apps.length) {
         firebase.initializeApp(firebaseConfig);
     }
     const db = firebase.database();
 
-    // --- GLOBAL VARIABLES ---
+    // --- GLOBAL STATE ---
     let currentYear = "2026";
     let currentTerm = "Term1";
     let learnersList = [];
     let currentRole = "";
+    let loggedUser = "";
     let firebaseListener = null;
 
-    // --- LOGIN SYSTEM ---
+    // --- LOGIN SYSTEM & ACTIVITY LOGGING ---
     function checkLogin() {
         const user = document.getElementById('userName').value.trim();
         const code = document.getElementById('accessCode').value.trim();
@@ -115,13 +134,34 @@
 
         if (code === "Admin256") currentRole = "admin";
         else if (code === "Staff2026") currentRole = "teacher";
-        else return alert("Invalid Access Code!");
+        else return alert("Invalid Access Code! CONTACT THE ADMIN");
 
+        loggedUser = user;
         document.getElementById('loginSection').style.display = 'none';
         document.getElementById('appSection').style.display = 'block';
         document.getElementById('displayRole').innerText = user + " (" + currentRole.toUpperCase() + ")";
-       
+
+        // Log login event
+        db.ref('activity_logs').push({
+            user: user,
+            role: currentRole,
+            timestamp: new Date().toLocaleString()
+        });
+
         listenToFirebase();
+        listenToLogs();
+    }
+
+    // --- LISTEN TO LOGS ---
+    function listenToLogs() {
+        db.ref('activity_logs').limitToLast(5).on('value', snap => {
+            const data = snap.val();
+            const logBox = document.getElementById('logContent');
+            if (!data) return logBox.innerHTML = "No recent activity.";
+            
+            const logs = Object.values(data).reverse();
+            logBox.innerHTML = logs.map(l => `<div><b>${l.user}</b> (${l.role}) logged in at ${l.timestamp}</div>`).join('');
+        });
     }
 
     // --- PERIOD SWITCHING ---
@@ -131,7 +171,7 @@
         listenToFirebase();
     }
 
-    // --- REALTIME DATABASE LISTENER WITH LEGACY FALLBACK ---
+    // --- REALTIME LISTENER WITH LEGACY FALLBACK ---
     function listenToFirebase() {
         if (firebaseListener) {
             db.ref(`years/${currentYear}/${currentTerm}/students`).off();
@@ -147,7 +187,6 @@
                 learnersList = Object.keys(data).map(k => ({ id: k, path: newPath, ...data[k] }));
                 renderTable();
             } else if (currentYear === "2026" && currentTerm === "Term1") {
-                // Fallback: Read old legacy data path for 2026 Term 1 if present
                 db.ref('students').on('value', (oldSnap) => {
                     const oldData = oldSnap.val();
                     learnersList = oldData ? Object.keys(oldData).map(k => ({ id: k, path: 'students', ...oldData[k] })) : [];
@@ -179,14 +218,21 @@
     }
 
     // --- UPDATE MARKS ---
-    function editMark(id, subj, cur) {
+    function editMark(id, baseSubj, cur) {
+        const examPhase = document.getElementById('examSelect').value;
+        if (examPhase === "ALL") {
+            alert("Switch to 'Mid-Term Exams' or 'End-Term Exams' to update marks.");
+            return;
+        }
+
         const score = prompt("Enter new mark:", cur);
         if (score !== null && !isNaN(score)) {
             const student = learnersList.find(s => s.id === id);
             const savePath = student && student.path ? `${student.path}/${id}` : `years/${currentYear}/${currentTerm}/students/${id}`;
+            const fieldToUpdate = `${baseSubj}_${examPhase.toLowerCase()}`;
 
             db.ref(savePath).update({
-                [subj]: parseInt(score)
+                [fieldToUpdate]: parseInt(score)
             });
         }
     }
@@ -201,18 +247,24 @@
         }
     }
 
-    // --- IMPORT LEARNERS FROM PREVIOUS TERM ---
+    // --- FIXED IMPORT LEARNERS ---
     function copyLearnersFromPrevious() {
-        const prevTerm = currentTerm === "Term2" ? "Term1" : currentTerm === "Term3" ? "Term2" : "Term3";
-        const prevYear = currentTerm === "Term1" ? (parseInt(currentYear) - 1).toString() : currentYear;
+        let prevYear = currentYear;
+        let prevTerm = "Term1";
+
+        if (currentTerm === "Term2") prevTerm = "Term1";
+        else if (currentTerm === "Term3") prevTerm = "Term2";
+        else if (currentTerm === "Term1") {
+            prevTerm = "Term3";
+            prevYear = (parseInt(currentYear) - 1).toString();
+        }
 
         if (!confirm(`Import learner list from ${prevYear} ${prevTerm}?`)) return;
 
-        db.ref(`years/${prevYear}/${prevTerm}/students`).once('value', (snap) => {
-            const oldData = snap.val();
-            if (!oldData) return alert("No learners found in the previous period!");
-
-            Object.values(oldData).forEach(student => {
+        // Helper function to process student imports
+        const processImport = (studentsObj) => {
+            if (!studentsObj) return false;
+            Object.values(studentsObj).forEach(student => {
                 db.ref(`years/${currentYear}/${currentTerm}/students`).push({
                     name: student.name,
                     class: student.class,
@@ -222,51 +274,99 @@
                     t_mt: 0, t_et: 0
                 });
             });
+            alert("Learners imported successfully with blank marks!");
+            return true;
+        };
 
-            alert("Learners imported with fresh marks!");
+        // Try importing from the new structured path first
+        db.ref(`years/${prevYear}/${prevTerm}/students`).once('value', (snap) => {
+            const success = processImport(snap.val());
+            if (!success) {
+                // Fallback: Try reading legacy root 'students'
+                db.ref('students').once('value', (legacySnap) => {
+                    const legacySuccess = processImport(legacySnap.val());
+                    if (!legacySuccess) {
+                        alert(`No learners found in ${prevYear} ${prevTerm} or legacy database!`);
+                    }
+                });
+            }
         });
     }
 
-    // --- RENDER TABLE AND AUTO-RANKING ---
+    // --- RENDER TABLE ---
     function renderTable() {
         const filter = document.getElementById('classFilter').value;
+        const phase = document.getElementById('examSelect').value;
         const thr = document.getElementById('thr');
         const tbody = document.getElementById('rows');
 
-        thr.innerHTML = `
-            <th>NAME</th>
-            <th>CLASS</th>
-            ${currentRole === 'admin' ? '<th>RANK</th>' : ''}
-            <th>QURAN (MT/ET)</th>
-            <th>FIQH (MT/ET)</th>
-            <th>LUGHA(MT/ET)</th>
-            <th>TARBIYA (MT/ET)</th>
-            <th>TOTAL</th>
-            <th>AVG</th>
-            <th>ACTION</th>`;
+        if (phase === "ALL") {
+            thr.innerHTML = `
+                <th>NAME</th><th>CLASS</th>
+                ${currentRole === 'admin' ? '<th>RANK</th>' : ''}
+                <th>QURAN (MT/ET)</th><th>FIQH (MT/ET)</th><th>LUGHA (MT/ET)</th><th>TARBIYA (MT/ET)</th>
+                <th>TOTAL</th><th>AVG</th><th>ACTION</th>`;
+        } else {
+            const phaseTitle = phase === "MT" ? "MID-TERM" : "END-TERM";
+            thr.innerHTML = `
+                <th>NAME</th><th>CLASS</th>
+                ${currentRole === 'admin' ? '<th>RANK</th>' : ''}
+                <th>QURAN (${phaseTitle})</th><th>FIQH (${phaseTitle})</th><th>LUGHA(${phaseTitle})</th><th>TARBIYA (${phaseTitle})</th>
+                <th>TOTAL</th><th>AVG</th><th>ACTION</th>`;
+        }
 
         let filtered = learnersList;
         if (filter !== "All") filtered = learnersList.filter(s => s.class === filter);
 
-        // Sort by total score (Highest first)
         filtered.sort((a, b) => {
-            const totalA = (parseInt(a.q_mt)||0) + (parseInt(a.q_et)||parseInt(a.q)||0) + (parseInt(a.f_mt)||0) + (parseInt(a.f_et)||parseInt(a.f)||0) + (parseInt(a.l_mt)||0) + (parseInt(a.l_et)||parseInt(a.l)||0) + (parseInt(a.t_mt)||0) + (parseInt(a.t_et)||parseInt(a.t)||0);
-            const totalB = (parseInt(b.q_mt)||0) + (parseInt(b.q_et)||parseInt(b.q)||0) + (parseInt(b.f_mt)||0) + (parseInt(b.f_et)||parseInt(b.f)||0) + (parseInt(b.l_mt)||0) + (parseInt(b.l_et)||parseInt(b.l)||0) + (parseInt(b.t_mt)||0) + (parseInt(b.t_et)||parseInt(b.t)||0);
-            return totalB - totalA;
+            const getScore = (s, sub, p) => {
+                if (p === "MT") return parseInt(s[`${sub}_mt`]) || 0;
+                if (p === "ET") return parseInt(s[`${sub}_et`]) || parseInt(s[sub]) || 0;
+                return (parseInt(s[`${sub}_mt`]) || 0) + (parseInt(s[`${sub}_et`]) || parseInt(s[sub]) || 0);
+            };
+            const totA = getScore(a, 'q', phase) + getScore(a, 'f', phase) + getScore(a, 'l', phase) + getScore(a, 't', phase);
+            const totB = getScore(b, 'q', phase) + getScore(b, 'f', phase) + getScore(b, 'l', phase) + getScore(b, 't', phase);
+            return totB - totA;
         });
 
         tbody.innerHTML = filtered.map((s, index) => {
-            const q_mt = parseInt(s.q_mt) || 0, q_et = parseInt(s.q_et) || parseInt(s.q) || 0;
-            const f_mt = parseInt(s.f_mt) || 0, f_et = parseInt(s.f_et) || parseInt(s.f) || 0;
-            const l_mt = parseInt(s.l_mt) || 0, l_et = parseInt(s.l_et) || parseInt(s.l) || 0;
-            const t_mt = parseInt(s.t_mt) || 0, t_et = parseInt(s.t_et) || parseInt(s.t) || 0;
+            const q_mt = parseInt(s.q_mt) || 0;
+            const q_et = parseInt(s.q_et) || parseInt(s.q) || 0;
 
-            const qTotal = q_mt + q_et;
-            const fTotal = f_mt + f_et;
-            const lTotal = l_mt + l_et;
-            const tTotal = t_mt + t_et;
+            const f_mt = parseInt(s.f_mt) || 0;
+            const f_et = parseInt(s.f_et) || parseInt(s.f) || 0;
 
-            const total = qTotal + fTotal + lTotal + tTotal;
+            const l_mt = parseInt(s.l_mt) || 0;
+            const l_et = parseInt(s.l_et) || parseInt(s.l) || 0;
+
+            const t_mt = parseInt(s.t_mt) || 0;
+            const t_et = parseInt(s.t_et) || parseInt(s.t) || 0;
+
+            let qVal, fVal, lVal, tVal;
+
+            if (phase === "MT") {
+                qVal = `<span class="editable" onclick="editMark('${s.id}', 'q', ${q_mt})">${q_mt}</span>`;
+                fVal = `<span class="editable" onclick="editMark('${s.id}', 'f', ${f_mt})">${f_mt}</span>`;
+                lVal = `<span class="editable" onclick="editMark('${s.id}', 'l', ${l_mt})">${l_mt}</span>`;
+                tVal = `<span class="editable" onclick="editMark('${s.id}', 't', ${t_mt})">${t_mt}</span>`;
+            } else if (phase === "ET") {
+                qVal = `<span class="editable" onclick="editMark('${s.id}', 'q', ${q_et})">${q_et}</span>`;
+                fVal = `<span class="editable" onclick="editMark('${s.id}', 'f', ${f_et})">${f_et}</span>`;
+                lVal = `<span class="editable" onclick="editMark('${s.id}', 'l', ${l_et})">${l_et}</span>`;
+                tVal = `<span class="editable" onclick="editMark('${s.id}', 't', ${t_et})">${t_et}</span>`;
+            } else {
+                qVal = `MT:${q_mt} | ET:${q_et}`;
+                fVal = `MT:${f_mt} | ET:${f_et}`;
+                lVal = `MT:${l_mt} | ET:${l_et}`;
+                tVal = `MT:${t_mt} | ET:${t_et}`;
+            }
+
+            const qScore = phase === "MT" ? q_mt : phase === "ET" ? q_et : (q_mt + q_et);
+            const fScore = phase === "MT" ? f_mt : phase === "ET" ? f_et : (f_mt + f_et);
+            const lScore = phase === "MT" ? l_mt : phase === "ET" ? l_et : (l_mt + l_et);
+            const tScore = phase === "MT" ? t_mt : phase === "ET" ? t_et : (t_mt + t_et);
+
+            const total = qScore + fScore + lScore + tScore;
             const avg = (total / 4).toFixed(1);
 
             return `
@@ -274,24 +374,10 @@
                     <td>${s.name}</td>
                     <td>${s.class}</td>
                     ${currentRole === 'admin' ? `<td><span class="rank-badge">#${index + 1}</span></td>` : ''}
-                   
-                    <td>
-                        <span class="editable" onclick="editMark('${s.id}', 'q_mt', ${q_mt})">MT:${q_mt}</span> |
-                        <span class="editable" onclick="editMark('${s.id}', 'q_et', ${q_et})">ET:${q_et}</span>
-                    </td>
-                    <td>
-                        <span class="editable" onclick="editMark('${s.id}', 'f_mt', ${f_mt})">MT:${f_mt}</span> |
-                        <span class="editable" onclick="editMark('${s.id}', 'f_et', ${f_et})">ET:${f_et}</span>
-                    </td>
-                    <td>
-                        <span class="editable" onclick="editMark('${s.id}', 'l_mt', ${l_mt})">MT:${l_mt}</span> |
-                        <span class="editable" onclick="editMark('${s.id}', 'l_et', ${l_et})">ET:${l_et}</span>
-                    </td>
-                    <td>
-                        <span class="editable" onclick="editMark('${s.id}', 't_mt', ${t_mt})">MT:${t_mt}</span> |
-                        <span class="editable" onclick="editMark('${s.id}', 't_et', ${t_et})">ET:${t_et}</span>
-                    </td>
-
+                    <td>${qVal}</td>
+                    <td>${fVal}</td>
+                    <td>${lVal}</td>
+                    <td>${tVal}</td>
                     <td style="font-weight:bold;">${total}</td>
                     <td>${avg}%</td>
                     <td><button style="background:red; padding:4px 8px;" onclick="delLearner('${s.id}')">Del</button></td>
